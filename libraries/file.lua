@@ -1,8 +1,6 @@
-local File = {}
-
 local HttpService = game:GetService("HttpService")
 
-function File.Get(Name, Options)
+return function(Name, Options)
 	local Split = Name:match("/") and Name:split("/") or {Name}
 	if #Split > 1 then
 	    local Current = ""
@@ -33,5 +31,3 @@ function File.Get(Name, Options)
 		end
 	})
 end
-
-return File
