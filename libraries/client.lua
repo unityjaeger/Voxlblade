@@ -1,7 +1,3 @@
-if not game:IsLoaded() then
-	game.IsLoaded:Wait()
-end
-
 local Client = {}
 
 local RunService = game:GetService("RunService")
