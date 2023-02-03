@@ -6,9 +6,6 @@ ESPObject.__index = ESPObject
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 
-local GuiService = game:GetService("GuiService")
-local Inset = Vector2.new(0, GuiService:GetGuiInset().Y)
-
 local Properties = {
     Visible = true,
     Color = Color3.new(1, 1, 1),
@@ -35,11 +32,16 @@ local Properties = {
 
 local Options = {
     MaxDistance = 5000,
-    ShowDistance = true
+    ShowDistance = true,
+    LowPerformance = false,
 }
 
+local function LowPerformanceToScreenPoint(Position)
+    return Camera:WorldToViewportPoint(Position)
+end
+
 local function ToScreenPoint(Object, Position)
-    local Vector = Camera:WorldToScreenPoint(Position)
+    local Vector = Camera:WorldToViewportPoint(Position)
 
     local CameraLookVector = Camera.CFrame.LookVector
     local CameraLookVectorToPoint = CFrame.new(Camera.CFrame.Position, Position).LookVector
@@ -78,56 +80,57 @@ local function SetVisible(Object, bool)
 end
 
 local Renderers = {
-        Text = function(self, v)
-            local Object = v.Object
-            local MainPart = v.MainPart
-            local Offset = v.Offset
-            local DefaultText = v.DefaultText
-    
-            local Distance = (Camera.CFrame.Position - MainPart.Position).Magnitude
-            if self.InputOptions.MaxDistance and Distance > self.InputOptions.MaxDistance then
-                SetVisible(Object, false)
-                return
-            end
-    
-            local Vec2Position = ToScreenPoint(Object, MainPart.Position + Offset)
-            if not Vec2Position then
-                SetVisible(Object, false)
-                return
-            end
-    
-            SetVisible(Object, true)
-            if self.InputOptions.ShowDistance then
-                Object.Text = DefaultText.."\n["..math.floor(Distance).."]"
-            end
-        
-            if Object.Position ~= Vec2Position then
-                Object.Position = Vec2Position + Inset
-            end
-        end,
-        Line = function(self, v)
-            local Object = v.Object
-            local MainPart = v.MainPart
-    
-            local Distance = (Camera.CFrame.Position - MainPart.Position).Magnitude
-            if self.InputOptions.MaxDistance and Distance > self.InputOptions.MaxDistance then
-                SetVisible(Object, false)
-                return
-            end
-    
-            local Vec2Position = ToScreenPoint(Object, MainPart.Position)
-            if not Vec2Position then
-                SetVisible(Object, false)
-                return
-            end
-    
-            SetVisible(Object, true)
-            
-            if Object.To ~= Vec2Position then
-                Object.To = Vec2Position - Inset
-            end
+    Text = function(self, v)
+        local Object = v.Object
+        local MainPart = v.MainPart
+        local Offset = v.Offset
+        local DefaultText = v.DefaultText
+
+        local Distance = (Camera.CFrame.Position - MainPart.Position).Magnitude
+        if self.InputOptions.MaxDistance and Distance > self.InputOptions.MaxDistance then
+            SetVisible(Object, false)
+            return
         end
-    }
+
+        local Vec2Position = self.InputOptions.LowPerformance and LowPerformanceToScreenPoint(MainPart.Position + Offset) or ToScreenPoint(Object, MainPart.Position + Offset)
+        if not Vec2Position then
+            SetVisible(Object, false)
+            return
+        end
+
+        SetVisible(Object, true)
+
+        if self.InputOptions.ShowDistance then
+            Object.Text = DefaultText.."\n["..math.floor(Distance).."]"
+        end
+    
+        if Object.Position ~= Vec2Position then
+            Object.Position = Vec2Position
+        end
+    end,
+    Line = function(self, v)
+        local Object = v.Object
+        local MainPart = v.MainPart
+
+        local Distance = (Camera.CFrame.Position - MainPart.Position).Magnitude
+        if self.InputOptions.MaxDistance and Distance > self.InputOptions.MaxDistance then
+            SetVisible(Object, false)
+            return
+        end
+
+        local Vec2Position = self.InputOptions.LowPerformance and LowPerformanceToScreenPoint(MainPart.Position) or ToScreenPoint(Object, MainPart.Position)
+        if not Vec2Position then
+            SetVisible(Object, false)
+            return
+        end
+
+        SetVisible(Object, true)
+        
+        if Object.To ~= Vec2Position then
+            Object.To = Vec2Position
+        end
+    end
+}
 
 function ESP.Base(InputOptions, InputProperties)
     local self = setmetatable({}, ESP)
@@ -137,7 +140,7 @@ function ESP.Base(InputOptions, InputProperties)
     self.InputProperties = FillTable(InputProperties or {}, Properties)
 
     local function Render()
-        for _,v in ipairs(self.Holder) do
+        for _,v in pairs(self.Holder) do
             local Type = getrawmetatable(v.Object).__type
             Renderers[Type](self, v)
         end
@@ -145,7 +148,7 @@ function ESP.Base(InputOptions, InputProperties)
 
     Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
         if self.InputProperties.Line.Custom.FromAuto then
-            for _,v in ipairs(self.Holder) do
+            for _,v in pairs(self.Holder) do
                 if getrawmetatable(v.Object).__type == "Line" then
                     v.Object.From = Vector2.new(Camera.ViewportSize.X * .5, Camera.ViewportSize.Y * .8)
                 end
@@ -198,9 +201,9 @@ function ESP:Add(Type, Part, Properties)
         if Custom.OffsetAuto then
             if Part:IsA("Model") then
                 local Size = Part:GetExtentsSize()
-                Offset = Vector3.new(0, Size.Y/2, 0)
+                Offset = Vector3.new(0, Size.Y/2 + 1, 0)
             else
-                Offset = Vector3.new(0, Part.Size.Y/2 + 3, 0)
+                Offset = Vector3.new(0, Part.Size.Y/2 + 1, 0)
             end
         end
         
@@ -245,7 +248,7 @@ function ESPObject:Update(Properties)
 end
 
 function ESP:UpdateAll(Type, Properties)
-    for _,v in ipairs(self.Holder) do
+    for _,v in pairs(self.Holder) do
         if not Type or getrawmetatable(v.Reference.Struct.Object).__type == Type then
             v.Reference:Update(Properties)
         end
@@ -253,7 +256,7 @@ function ESP:UpdateAll(Type, Properties)
 end
 
 function ESP:RemoveAll()
-    for _,v in ipairs(self.Holder) do
+    for _,v in pairs(self.Holder) do
         v.Reference:Remove()
     end
 end
