@@ -77,15 +77,8 @@ local function SetVisible(Object, bool)
     end
 end
 
-function ESP.Base(InputOptions, InputProperties)
-    local self = setmetatable({}, ESP)
-    self.Holder = {}
-
-    self.InputOptions = FillTable(InputOptions or {}, Options)
-    self.InputProperties = FillTable(InputProperties or {}, Properties)
-
-    local Renderers = {
-        Text = function(v)
+local Renderers = {
+        Text = function(self, v)
             local Object = v.Object
             local MainPart = v.MainPart
             local Offset = v.Offset
@@ -112,7 +105,7 @@ function ESP.Base(InputOptions, InputProperties)
                 Object.Position = Vec2Position + Inset
             end
         end,
-        Line = function(v)
+        Line = function(self, v)
             local Object = v.Object
             local MainPart = v.MainPart
     
@@ -136,10 +129,17 @@ function ESP.Base(InputOptions, InputProperties)
         end
     }
 
+function ESP.Base(InputOptions, InputProperties)
+    local self = setmetatable({}, ESP)
+    self.Holder = {}
+
+    self.InputOptions = FillTable(InputOptions or {}, Options)
+    self.InputProperties = FillTable(InputProperties or {}, Properties)
+
     local function Render()
         for _,v in ipairs(self.Holder) do
             local Type = getrawmetatable(v.Object).__type
-            Renderers[Type](v)
+            Renderers[Type](self, v)
         end
     end
 
