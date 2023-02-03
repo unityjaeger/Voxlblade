@@ -8,6 +8,11 @@ local Camera = workspace.CurrentCamera
 
 local Inset = game:GetService("GuiService"):GetGuiInset()
 
+local Options = {
+    MaxDistance = 5000,
+    ShowDistance = true
+}
+
 local Properties = {
     Visible = true,
     Color = Color3.new(1, 1, 1),
@@ -31,17 +36,6 @@ local Properties = {
         }
     }
 }
-
-local Options = {
-    MaxDistance = 5000,
-    ShowDistance = true,
-    LowPerformance = false,
-}
-
-local function LowPerformanceToScreenPoint(Position)
-    local Vector = Camera:WorldToScreenPoint(Position)
-    return Vector2.new(Vector.X, Vector.Y)
-end
 
 local function ToScreenPoint(Object, Position)
     local Vector = Camera:WorldToScreenPoint(Position)
@@ -89,7 +83,7 @@ local Renderers = {
             return
         end
 
-        local Vec2Position = self.InputOptions.LowPerformance and LowPerformanceToScreenPoint(MainPart.Position + Offset) or ToScreenPoint(Object, MainPart.Position + Offset)
+        local Vec2Position = ToScreenPoint(Object, MainPart.Position + Offset)
         if not Vec2Position then
             SetVisible(Object, false)
             return
@@ -115,7 +109,7 @@ local Renderers = {
             return
         end
 
-        local Vec2Position = self.InputOptions.LowPerformance and LowPerformanceToScreenPoint(MainPart.Position) or ToScreenPoint(Object, MainPart.Position)
+        local Vec2Position = ToScreenPoint(Object, MainPart.Position)
         if not Vec2Position then
             SetVisible(Object, false)
             return
