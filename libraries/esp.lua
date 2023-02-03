@@ -1,22 +1,50 @@
 local ESP = {}
 ESP.__index = ESP
+local ESPObject = {}
+ESPObject.__index = ESPObject
 
-if not workspace.CurrentCamera then
-    repeat
-        workspace.ChildAdded:Wait()
-    until workspace.CurrentCamera
-end
-
-local Player = game:GetService("Players").LocalPlayer
+local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 
-local function ToScreenPoint(DrawingObject, Position)
+local GuiService = game:GetService("GuiService")
+local Inset = Vector2.new(0, GuiService:GetGuiInset().Y)
+
+local Properties = {
+    Visible = true,
+    Color = Color3.new(1, 1, 1),
+    Transparency = 1,
+    Text = {
+        Size = 18,
+        Font = Drawing.Fonts.Monospace,
+        Outline = false,
+        OutlineColor = Color3.new(),
+        Custom = {
+            Offset = CFrame.new(),
+            OffsetAuto = true,
+            CustomText = nil
+        }
+    },
+    Line = {
+        Thickness = .5,
+        From = Vector2.new(),
+        Custom = {
+            FromAuto = true
+        }
+    }
+}
+
+local Options = {
+    MaxDistance = 5000,
+    ShowDistance = true
+}
+
+local function ToScreenPoint(Object, Position)
     local Vector = Camera:WorldToScreenPoint(Position)
 
     local CameraLookVector = Camera.CFrame.LookVector
     local CameraLookVectorToPoint = CFrame.new(Camera.CFrame.Position, Position).LookVector
-    local InBounds = (getrawmetatable(DrawingObject).__type == "Text") and (
-        Vector.X < (-DrawingObject.TextBounds.X / 2) or Vector.X > (Camera.ViewportSize.X + DrawingObject.TextBounds.X)
+    local InBounds = (getrawmetatable(Object).__type == "Text") and (
+        Vector.X < (-Object.TextBounds.X / 2) or Vector.X > (Camera.ViewportSize.X + Object.TextBounds.X)
     ) or true
 
     return (
@@ -26,336 +54,208 @@ local function ToScreenPoint(DrawingObject, Position)
     )
 end
 
-local Default = {
-    Base = {
-        MaxDistance = 5000;
-        ShowHealth = true;
-        ShowDistance = true;
-        AutoRemove = true;
-    };
-    Text = {
-        CustomName = nil;
-        TextSize = 17;
-        Color = Color3.fromRGB(255, 255, 255);
-        Transparency = 0;
-        Outline = false;
-        OutlineColor = Color3.fromRGB(255, 255, 255);
-        Font = "System";
-        Offset = "Auto"
-    };
-    Highlight = {
-        FillColor = Color3.fromRGB(255, 255, 255);
-        FillTransparency = .5;
-        OutlineColor = Color3.fromRGB(255, 255, 255);
-        OutlineTransparency = 1;
-        DepthMode = Enum.HighlightDepthMode.AlwaysOnTop;
-    };
-    Tracer = {
-        From = "Auto";
-        Color = Color3.fromRGB(255, 255, 255);
-        Transparency = 0;
-        Thickness = 1;
-    };
-}
+function DeepCopy(Table)
+    local Copy = {}
+    for key, value in pairs(Table) do
+        Copy[key] = type(value) == "table" and DeepCopy(value) or value
+    end
+    return Copy
+end
 
-local function SlotFinder(Table)
-    local nextindex = 1
-    for index, _ in pairs(Table) do
-        if nextindex < index then
-            return index - 1
+local function FillTable(Table, Default, Branch)
+    for key, value in pairs(Branch and Default[Branch] or Default) do
+        if not Table[key] then
+            Table[key] = type(value) == "table" and DeepCopy(value) or value
         end
-        
-        nextindex = nextindex + 1
     end
-    return #Table + 1
+    return Table
 end
 
-local function Constructor(Type)
-    local Object
-    if Type == "Text" then
-        Object = Drawing.new("Text")
-    elseif Type == "Tracer" then
-        Object = Drawing.new("Line")
-    else
-        Object = Instance.new("Highlight")
-    end
-    return Object
-end
-
-local function SetProperties(Type, Object, Options)
-    if Type == "Text" then
-        Object.Size = Options.TextSize
-        Object.Color = Options.Color
-        Object.Transparency = 1 - Options.Transparency
-        Object.Outline = Options.Outline
-        Object.OutlineColor = Options.OutlineColor
-        Object.Font = Drawing.Fonts[Options.Font]
-        Object.Center = true
-    elseif Type == "Tracer" then
-        Object.Color = Options.Color
-        Object.Transparency = 1 - Options.Transparency
-
-        Object.From = (not Options.From or Options.From == "Auto") and (
-            Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/5 * 4)
-        ) or Options.From
-    else
-        Object.FillColor = Options.FillColor
-        Object.FillTransparency = Options.FillTransparency
-        Object.OutlineColor = Options.OutlineColor
-        Object.OutlineTransparency = Options.OutlineTransparency
-        Object.DepthMode = Options.DepthMode
+local function SetVisible(Object, bool)
+    if Object.Visible ~= bool then
+        Object.Visible = bool
     end
 end
 
-function ESP.Base(Settings)
+function ESP.Base(InputOptions, InputProperties)
     local self = setmetatable({}, ESP)
+    self.Holder = {}
 
-    self.BaseOptions = Settings and coroutine.wrap(function()
-        local Temp = Settings
-        for key, value in pairs(Default.Base) do
-            if not Temp[key] then
-                Temp[key] = value
+    self.InputOptions = FillTable(InputOptions or {}, Options)
+    self.InputProperties = FillTable(InputProperties or {}, Properties)
+
+    local Renderers = {
+        Text = function(v)
+            local Object = v.Object
+            local MainPart = v.MainPart
+            local Offset = v.Offset
+            local DefaultText = v.DefaultText
+    
+            local Distance = (Camera.CFrame.Position - MainPart.Position).Magnitude
+            if self.InputOptions.MaxDistance and Distance > self.InputOptions.MaxDistance then
+                SetVisible(Object, false)
+                return
+            end
+    
+            local Vec2Position = ToScreenPoint(Object, MainPart.Position + Offset)
+            if not Vec2Position then
+                SetVisible(Object, false)
+                return
+            end
+    
+            SetVisible(Object, true)
+            if self.InputOptions.ShowDistance then
+                Object.Text = DefaultText.."\n["..math.floor(Distance).."]"
+            end
+        
+            if Object.Position ~= Vec2Position then
+                Object.Position = Vec2Position + Inset
+            end
+        end,
+        Line = function(v)
+            local Object = v.Object
+            local MainPart = v.MainPart
+    
+            local Distance = (Camera.CFrame.Position - MainPart.Position).Magnitude
+            if self.InputOptions.MaxDistance and Distance > self.InputOptions.MaxDistance then
+                SetVisible(Object, false)
+                return
+            end
+    
+            local Vec2Position = ToScreenPoint(Object, MainPart.Position)
+            if not Vec2Position then
+                SetVisible(Object, false)
+                return
+            end
+    
+            SetVisible(Object, true)
+            
+            if Object.To ~= Vec2Position then
+                Object.To = Vec2Position + Inset
             end
         end
-        return Temp
-    end)() or Default.Base
+    }
 
-    local Folder = Instance.new("Folder")
-    Folder.Name = syn.crypt.random(24)
-    Folder.Parent = game:GetService("CoreGui")
-
-    self.HighlightFolder = Folder
-    self.HighlightCount = 0
-
-    self.Proxy = {}
-    self.RenderConnection = nil
-
-    local function RenderText(Table)
-        local Object = Table._Object
-        local Text = Table._ESPObject
-        local Options = Table._Options
-        local SourceData = Table._SourceData
-
-        local Offset = not Options.Offset and Vector3.zero or Options.Offset == "Auto" and (
-            Vector3.new(0, SourceData.RefPart.Size.Y/2 + 1, 0)
-        ) or Options.Offset
-        
-        local PositionVector = ToScreenPoint(Text, SourceData.RefPart.Position + Offset)
-        local Distance = (Camera.CFrame.Position - SourceData.RefPart.Position).Magnitude
-
-        if not PositionVector or (self.BaseOptions.MaxDistance and Distance >= self.BaseOptions.MaxDistance or false) then
-            if Text.Visible then
-                Text.Visible = false
-            end
-
-            return
+    local function Render()
+        for _,v in ipairs(self.Holder) do
+            local Type = getrawmetatable(v.Object).__type
+            Renderers[Type](v)
         end
-        
-        if not Text.Visible then
-            Text.Visible = true
-        end
-
-        local DisplayName = (Options.CustomName or Object.Name)
-        local Display = DisplayName
-        if self.BaseOptions.ShowDistance then
-            Display = Display.."\n["..math.floor(Distance).."]"
-        end
-        if self.BaseOptions.ShowHealth and SourceData.Humanoid then
-            Display = Display..(Display:len() == DisplayName:len() and "\n" or " ").."["..
-            (math.floor(SourceData.Humanoid.Health).."/"..math.floor(SourceData.Humanoid.MaxHealth)).."]"
-        end
-        
-        Text.Text = Display
-        Text.Position = PositionVector
-    end
-
-    local function RenderTracer(Table)
-        local Tracer = Table._ESPObject
-        local SourceData = Table._SourceData
-        
-        local PositionVector = ToScreenPoint(Tracer, SourceData.RefPart.Position)
-        local Distance = (Camera.CFrame.Position - SourceData.RefPart.Position).Magnitude
-
-        if not PositionVector or (self.BaseOptions.MaxDistance and Distance >= self.BaseOptions.MaxDistance or false) then
-            if Tracer.Visible then
-                Tracer.Visible = false
-            end
-
-            return
-        end
-        
-        if not Tracer.Visible then
-            Tracer.Visible = true
-        end
-        
-        Tracer.To = PositionVector + Vector2.new(0, game:GetService("GuiService"):GetGuiInset().Y)
     end
 
     Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
-        for _, value in pairs(self.Proxy) do
-            if value._Type == "Tracer" then
-                local Object = value._ESPObject
-                local Options = value._Options
-                if not Options.From or Options.From == "Auto" then
-                    Object.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/5 * 4)
+        if self.InputProperties.Line.Custom.FromAuto then
+            for _,v in ipairs(self.Holder) do
+                if getrawmetatable(v.Object).__type == "Line" then
+                    v.Object.From = Vector2.new(Camera.ViewportSize.X * .5, Camera.ViewportSize.Y * .8)
                 end
             end
         end
     end)
 
-    local function RenderMaster()
-        for _, value in pairs(self.Proxy) do
-            if value._Type == "Text" then
-                RenderText(value)
-            elseif value._Type == "Tracer" then
-                RenderTracer(value)
-            end
-        end
-    end
+    self.RenderDrawings = RunService.RenderStepped:Connect(Render)
 
-    self.Highlights = {}
-    self.Drawings = setmetatable({}, {
-        __newindex = function(_, k, v)
-            rawset(self.Proxy, k, v)
-
-            if #self.Proxy > 0 and not self.RenderConnection then
-                self.RenderConnection = game:GetService("RunService").RenderStepped:Connect(RenderMaster)
-            elseif #self.Proxy == 0 and self.RenderConnection then
-                self.RenderConnection:Disconnect()
-            end
-        end;
-    })
-
-    warn("Disclaimer: The MaxDistance property is not supported for Highlights, as it produces unnecessary lag")
     return self
 end
 
-function ESP:Add(Type, Object, Settings)
-    if not Default[Type] or Type == "Base" then
-        error(("ESP Element of type %s does not exist"):format(Type))
-    end
-
-    if Type == "Highlight" and self.HighlightCount >= 31 then
-        error("Cannot exceed a maximum of 31 Highlights, this is a roblox issue")
-    end
-
-    local Options = Settings and coroutine.wrap(function()
-        local Temp = Settings
-        for key, value in pairs(Default[Type]) do
-            if not Temp[key] then
-                Temp[key] = value
-            end
-        end
-        return Temp
-    end)() or Default[Type]
-
-    local Slot = SlotFinder(self.Proxy)
-    local CreatedInstance = Constructor(Type, Options)
-    SetProperties(Type, CreatedInstance, Options)
-
-    local SourceData = {}
-    if Type == "Highlight" then
-        CreatedInstance.Adornee = Object
-        CreatedInstance.Parent = self.HighlightFolder
-        self.HighlightCount = self.HighlightCount + 1
-    else
-        SourceData.Humanoid = (Object.Parent:FindFirstChild("Humanoid") or Object:FindFirstChild("Humanoid"))
-        SourceData.RefPart = (Object:IsA"Model" and Object.PrimaryPart or Object)
-    end
-
-    local function Void()
-        if Type ~= "Highlight" then
-            self.Proxy[Slot] = nil
-            CreatedInstance:Remove()
-        else
-            CreatedInstance:Destroy()
-            self.HighlightCount = self.HighlightCount - 1
+local function ConstructSettings(Object, self)
+    for key, value in pairs(self.InputProperties) do
+        if type(value) ~= "table" then
+            Object[key] = value
         end
     end
 
-    local function Update(_, NewSettings)
-        if not NewSettings then
-            error("Settings not found")
-            return
-        end
-        
-        local NewOptions = coroutine.wrap(function()
-            local Temp = NewSettings
-            for key, value in pairs(Default[Type]) do
-                if not Temp[key] then
-                    Temp[key] = value
-                end
-            end
-            return Temp
-        end)()
-
-        SetProperties(Type, CreatedInstance, NewOptions)
-        if Type ~= "Highlight" then
-            self.Proxy[Slot]._Options = NewOptions
+    for key, value in pairs(self.InputProperties[getrawmetatable(Object).__type]) do
+        if type(value) ~= "table" then
+            Object[key] = value
         end
     end
+end
 
-    local Holder = {
-        _Type = Type;
-        _Object = Object;
-        _ESPObject = CreatedInstance;
-        _Options = Options;
-        _SourceData = SourceData;
+local function UpdateSettings(Object, Properties)
+    for key, value in pairs(Properties) do
+        Object[key] = value
+    end
+end
+
+function ESP:Add(Type, Part, Properties)
+    local Object = Drawing.new(Type)
+    ConstructSettings(Object, self)
+    local MainPart = Part:IsA("Model") and Part.PrimaryPart or Part
+    local Custom = self.InputProperties[Type].Custom
+    
+    if Properties then
+        UpdateSettings(Object, Properties)
+    end
+
+    local Structure = {
+        Object = Object,
+        MainPart = MainPart,
     }
 
-    local Proxy = setmetatable({}, {})
-    rawset(Proxy, "Remove", Void)
-    rawset(Proxy, "Update", Update)
-
-    if self.BaseOptions.AutoRemove then
-        local Connection
-        Connection = Object.AncestryChanged:Connect(function(_, new)
-            if not new then
-                Proxy:Remove()
-                Connection:Disconnect()
-            end
-        end)
-    end
-
-    if Type ~= "Highlight" then 
-        self.Drawings[Slot] = Holder
-    end
-
-    return Proxy
-end
-
-function ESP:Purge(Type)
-    if Type == "Highlight" then
-        for _, value in ipairs(self.HighlightFolder:GetChildren()) do
-            value:Destroy()
-            self.HighlightCount = self.HighlightCount - 1
-        end
-        return
-    end
-
-    for index, value in pairs(self.Proxy) do
-        if not Type or value._Type == Type then
-            self.Proxy[index] = nil
-            value._ESPObject:Remove()
-        end
-    end
-end
-
-function ESP:Update(Settings)
-    if not Settings then
-        error("Settings not found")
-        return
-    end
-
-    self.BaseOptions = Settings and coroutine.wrap(function()
-        local Temp = Settings
-        for key, value in pairs(Default.Base) do
-            if not Temp[key] then
-                Temp[key] = value
+    if Type == "Text" then
+        local Offset = Custom.Offset
+        if Custom.OffsetAuto then
+            if Part:IsA("Model") then
+                local Size = Part:GetExtentsSize()
+                Offset = Vector3.new(0, Size.Y/2, 0)
+            else
+                Offset = Vector3.new(0, Part.Size.Y/2 + 3, 0)
             end
         end
-        return Temp
-    end)() or Default.Base
+        
+        Structure.Offset = Offset
+        Structure.DefaultText = self.InputProperties.Text.Custom.CustomText or Part.Name
+        
+        Object.Text = Structure.DefaultText
+        Object.Center = true
+    else
+        if self.InputProperties.Line.Custom.FromAuto then
+            Object.From = Vector2.new(Camera.ViewportSize.X * .5, Camera.ViewportSize.Y * .8)
+        end
+    end
+
+    local selfDrawing = setmetatable({
+        Struct = Structure,
+        Slot = #self.Holder + 1,
+        Parent = self
+    }, ESPObject)
+
+    Structure.Reference = selfDrawing
+
+    self.Holder[selfDrawing.Slot] = Structure
+
+    MainPart.AncestryChanged:Connect(function(_, new)
+        if not new then
+            selfDrawing:Remove()
+        end
+    end)
+
+    return selfDrawing
+end
+
+function ESPObject:Remove()
+    self.Parent.Holder[self.Slot] = nil
+    self.Struct.Object:Remove()
+    setmetatable(self, nil)
+end
+
+function ESPObject:Update(Properties)
+    UpdateSettings(self.Struct.Object, Properties)
+end
+
+function ESP:UpdateAll(Type, Properties)
+    for _,v in ipairs(self.Holder) do
+        if not Type or getrawmetatable(v.Reference.Struct.Object).__type == Type then
+            v.Reference:Update(Properties)
+        end
+    end
+end
+
+function ESP:RemoveAll()
+    for _,v in ipairs(self.Holder) do
+        v.Reference:Remove()
+    end
 end
 
 return ESP
