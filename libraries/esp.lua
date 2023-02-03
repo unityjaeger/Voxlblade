@@ -124,7 +124,7 @@ local Renderers = {
             SetVisible(Object, true)
             
             if Object.To ~= Vec2Position then
-                Object.To = Vec2Position
+                Object.To = Vec2Position - Inset
             end
         end
     }
