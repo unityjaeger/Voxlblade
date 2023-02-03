@@ -39,7 +39,8 @@ local Options = {
 }
 
 local function LowPerformanceToScreenPoint(Position)
-    return Camera:WorldToScreenPoint(Position)
+    local _, Vector = Camera:WorldToScreenPoint(Position)
+    return Vector
 end
 
 local function ToScreenPoint(Object, Position)
