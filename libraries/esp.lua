@@ -46,17 +46,11 @@ end
 local function ToScreenPoint(Object, Position)
     local Vector = Camera:WorldToScreenPoint(Position)
 
-    local CameraLookVector = Camera.CFrame.LookVector
-    local CameraLookVectorToPoint = CFrame.new(Camera.CFrame.Position, Position).LookVector
-    local InBounds = (getrawmetatable(Object).__type == "Text") and (
-        Vector.X < (-Object.TextBounds.X / 2) or Vector.X > (Camera.ViewportSize.X + Object.TextBounds.X)
-    ) or true
+    local InBounds = ((getrawmetatable(Object).__type == "Text") and (
+        Vector.X < (-Object.TextBounds.X / 2) or Vector.X > (Camera.ViewportSize.X + Object.TextBounds.X/2)
+    ) or true) and Vector.Z > 0
 
-    return (
-        CameraLookVectorToPoint:Dot(CameraLookVector) > 0 and InBounds and (
-            Vector2.new(Vector.X, Vector.Y)
-        ) or nil
-    )
+    return InBounds and Vector2.new(Vector.X, Vector.Y)
 end
 
 function DeepCopy(Table)
