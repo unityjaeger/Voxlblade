@@ -6,6 +6,8 @@ ESPObject.__index = ESPObject
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 
+local Inset = game:GetService("GuiService"):GetGuiInset()
+
 local Properties = {
     Visible = true,
     Color = Color3.new(1, 1, 1),
@@ -37,11 +39,11 @@ local Options = {
 }
 
 local function LowPerformanceToScreenPoint(Position)
-    return Camera:WorldToViewportPoint(Position)
+    return Camera:WorldToScreenPoint(Position)
 end
 
 local function ToScreenPoint(Object, Position)
-    local Vector = Camera:WorldToViewportPoint(Position)
+    local Vector = Camera:WorldToScreenPoint(Position)
 
     local CameraLookVector = Camera.CFrame.LookVector
     local CameraLookVectorToPoint = CFrame.new(Camera.CFrame.Position, Position).LookVector
@@ -127,7 +129,7 @@ local Renderers = {
         SetVisible(Object, true)
         
         if Object.To ~= Vec2Position then
-            Object.To = Vec2Position
+            Object.To = Vec2Position + Inset
         end
     end
 }
