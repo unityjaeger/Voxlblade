@@ -246,9 +246,11 @@ function ESP:UpdateAll(Type, Properties)
     end
 end
 
-function ESP:RemoveAll()
+function ESP:RemoveAll(Type)
     for _,v in pairs(self.Holder) do
-        v.Reference:Remove()
+        if not Type or getrawmetatable(v.Reference.Struct.Object).__type == Type then
+            v.Reference:Remove()
+        end
     end
 end
 
