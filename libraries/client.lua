@@ -66,7 +66,7 @@ function Client.Noclip(bool)
 		end)
 	else
 		if NoclipConnection then
-			NoclipConnection:Diconnect()
+			NoclipConnection:Disconnect()
 		end
 	end
 end
