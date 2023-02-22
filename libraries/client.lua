@@ -58,7 +58,7 @@ end
 
 local NoclipConnection
 function Client.Noclip(bool)
-	if bool then
+	if bool and not NoclipConnection then
 		NoclipConnection = RunService.Stepped:Connect(function()
 			for _, Limb in ipairs(Limbs) do
 				Limb.CanCollide = false
