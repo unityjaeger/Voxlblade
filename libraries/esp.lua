@@ -17,6 +17,7 @@ local Properties = {
     Visible = true,
     Color = Color3.new(1, 1, 1),
     Transparency = 1,
+    AutoRemove = true,
     Text = {
         Size = 18,
         Font = Drawing.Fonts.Monospace,
@@ -219,11 +220,13 @@ function ESP:Add(Type, Part, Properties)
 
     self.Holder[selfDrawing.Slot] = Structure
 
-    MainPart.AncestryChanged:Connect(function(_, new)
-        if not new then
-            selfDrawing:Remove()
-        end
-    end)
+    if self.InputProperties.AutoRemove then
+        MainPart.AncestryChanged:Connect(function(_, new)
+            if not new then
+                selfDrawing:Remove()
+            end
+        end)
+    end
 
     return selfDrawing
 end
