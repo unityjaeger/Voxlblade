@@ -8,7 +8,7 @@ local Player = game.Players.LocalPlayer
 local Character =  Player.Character or Player.CharacterAdded:Wait()
 
 local Root = Character:WaitForChild("HumanoidRootPart")
-local Torso = Character:WaitForChild("Torso")
+local Torso = Character:FindFirstChild("Torso") or Character:FindFirstChild("UpperTorso")
 local Humanoid = Character:WaitForChild("Humanoid")
 local Animator = Humanoid:FindFirstChildOfClass("Animator")
 
