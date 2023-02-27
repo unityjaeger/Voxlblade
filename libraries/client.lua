@@ -12,6 +12,8 @@ local Torso = Character:FindFirstChild("Torso") or Character:FindFirstChild("Upp
 local Humanoid = Character:WaitForChild("Humanoid")
 local Animator = Humanoid:FindFirstChildOfClass("Animator")
 
+local FloatHeight = Character:FindFirstChild("Torso") and 3.5 or 3.479
+
 local Limbs = {}
 
 local function SetupNoclip()
@@ -81,7 +83,7 @@ function Client.Float(bool)
         FloatingPart.Anchored = true
         FloatingPart.Parent = workspace.CurrentCamera
         
-        local Offset = CFrame.new(0, -3.5, 0)
+        local Offset = CFrame.new(0, -FloatHeight, 0)
         FloatConnection = RunService.Heartbeat:Connect(function()
             Client.Root(function(Root)
                 FloatingPart.CFrame = Root.CFrame * Offset
