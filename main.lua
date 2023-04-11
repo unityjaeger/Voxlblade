@@ -23,19 +23,28 @@ local MiscBox = Tabs.Main:AddRightGroupbox("Misc")
 MiscBox:AddToggle('NoFog', {
     Text = 'No Fog',
     Default = false,
-    Tooltip = 'Removes Fog and Atmosphere'
+    Tooltip = 'removes fog and atmosphere'
 })
 
 MiscBox:AddToggle('NoShadows', {
     Text = 'No Shadows',
     Default = false,
-    Tooltip = 'Removes Shadows'
+    Tooltip = 'removes shadows'
 })
 
 MiscBox:AddToggle('Fullbright', {
     Text = 'Fullbright',
     Default = false,
-    Tooltip = 'Increases Brightness'
+    Tooltip = 'increases brightness'
+})
+
+MiscBox:AddButton({
+    Text = 'Unlock Camera Zoom',
+    Func = function()
+        Player.CameraMaxZoomDistance = 9e9
+    end,
+    DoubleClick = false,
+    Tooltip = 'makes it so u can zoom further'
 })
 
 MainBox:AddButton({
@@ -46,7 +55,7 @@ MainBox:AddButton({
         Character.HumanoidRootPart.RootAttachment:Destroy()
     end,
     DoubleClick = false,
-    Tooltip = 'Mobs dont aggro on u'
+    Tooltip = 'mobs dont aggro on u'
 })
 
 Toggles.NoFog:OnChanged(function(bool)
