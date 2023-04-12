@@ -14,7 +14,7 @@ local Humanoid = Character:WaitForChild("Humanoid")
 function Setup()
     Character, Root, Torso, Humanoid = nil
     Character = Player.CharacterAdded:Wait()
-    Root = Character:WaitForChild("Root")
+    Root = Character:WaitForChild("HumanoidRootPart")
     Torso = Character:WaitForChild("Torso")
     Humanoid = Character:WaitForChild("Humanoid")
     Humanoid.Died:Connect(Setup)
