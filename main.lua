@@ -5,12 +5,14 @@ if not game:IsLoaded() then
 end
 
 local Player = game.Players.LocalPlayer
+
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Root = Character:WaitForChild("HumanoidRootPart")
 local Torso = Character:WaitForChild("Torso")
 local Humanoid = Character:WaitForChild("Humanoid")
 
 function Setup()
+    Character, Root, Torso, Humanoid = nil
     Character = Player.CharacterAdded:Wait()
     Root = Character:WaitForChild("Root")
     Torso = Character:WaitForChild("Torso")
@@ -68,7 +70,7 @@ MainBox:AddButton({
         if not Root then
             return
         end
-        --very insane i know
+        
         local Attachment = Root:FindFirstChild("RootAttachment")
         if Attachment then
             Attachment:Destroy()
@@ -76,6 +78,22 @@ MainBox:AddButton({
     end,
     DoubleClick = false,
     Tooltip = 'mobs dont aggro on u'
+})
+
+MainBox:AddButton({
+    Text = 'Abandon your mortal shell.',
+    Func = function()
+        if not Root then
+            return
+        end
+        
+        local Joint = Root:FindFirstChild("RootJoint")
+        if Joint then
+            Joint:Destroy()
+        end
+    end,
+    DoubleClick = false,
+    Tooltip = '...'
 })
 
 Toggles.NoFog:OnChanged(function(bool)
