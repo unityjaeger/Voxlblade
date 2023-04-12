@@ -1,6 +1,23 @@
 local Library = loadstring(game:HttpGet'https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/Library.lua')()
 
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
 local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Root = Character:WaitForChild("Root")
+local Torso = Character:WaitForChild("Torso")
+local Humanoid = Character:WaitForChild("Humanoid")
+
+function Setup()
+    Character = Player.CharacterAdded:Wait()
+    Root = Character:WaitForChild("Root")
+    Torso = Character:WaitForChild("Torso")
+    Humanoid = Character:WaitForChild("Humanoid")
+    Humanoid.Died:Connect(Setup)
+end
+Humanoid.Died:Connect(Setup)
 
 local Lighting = game.Lighting
 local NPCS = workspace.NPCS
@@ -15,6 +32,7 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab("Main"),
+    ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
 local MainBox = Tabs.Main:AddLeftGroupbox("Main")
@@ -25,19 +43,16 @@ MiscBox:AddToggle('NoFog', {
     Default = false,
     Tooltip = 'removes fog and atmosphere'
 })
-
 MiscBox:AddToggle('NoShadows', {
     Text = 'No Shadows',
     Default = false,
     Tooltip = 'removes shadows'
 })
-
 MiscBox:AddToggle('Fullbright', {
     Text = 'Fullbright',
     Default = false,
     Tooltip = 'increases brightness'
 })
-
 MiscBox:AddButton({
     Text = 'Unlock Camera Zoom',
     Func = function()
@@ -48,11 +63,16 @@ MiscBox:AddButton({
 })
 
 MainBox:AddButton({
-    Text = 'Anti Aggro',
+    Text = 'Disable Aggro',
     Func = function()
-        local Character = Player.Character
-        if not (Character and Character.HumanoidRootPart) then return end
-        Character.HumanoidRootPart.RootAttachment:Destroy()
+        if not Root then
+            return
+        end
+        --very insane i know
+        local Attachment = Root:FindFirstChild("RootAttachment")
+        if Attachment then
+            Attachment:Destroy()
+        end
     end,
     DoubleClick = false,
     Tooltip = 'mobs dont aggro on u'
@@ -79,3 +99,15 @@ Toggles.Fullbright:OnChanged(function(bool)
         task.wait()
     end
 end)
+
+Library:OnUnload(function()
+    print('Unloaded!')
+    Library.Unloaded = true
+end)
+
+local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+
+MenuGroup:AddButton('Unload', function() Library:Unload() end)
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' }) 
+
+Library.ToggleKeybind = Options.MenuKeybind
