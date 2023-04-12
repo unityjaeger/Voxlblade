@@ -6,7 +6,7 @@ end
 
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
-local Root = Character:WaitForChild("Root")
+local Root = Character:WaitForChild("HumanoidRootPart")
 local Torso = Character:WaitForChild("Torso")
 local Humanoid = Character:WaitForChild("Humanoid")
 
@@ -101,7 +101,6 @@ Toggles.Fullbright:OnChanged(function(bool)
 end)
 
 Library:OnUnload(function()
-    print('Unloaded!')
     Library.Unloaded = true
 end)
 
