@@ -357,7 +357,7 @@ Toggles.mob_farm:OnChanged(function(bool)
 
             local Goal = SpawnZones:FindFirstChild(CombinedAreas[CurrentCounter])
             if Counter > CurrentCounter then
-                if SubCounter > 4 then
+                if SubCounter > 8 then
                     CurrentCounter = CurrentCounter + 1
                     SubCounter = 1
                     continue
@@ -375,7 +375,7 @@ Toggles.mob_farm:OnChanged(function(bool)
 
                 Transport(CFrame.new(Corners[SubCounter]))
                 if (Root.Position - Corners[SubCounter]).Magnitude < 10 then
-                    SubCounter = SubCounter + 5
+                    SubCounter = SubCounter + 1
                     Debounce = os.clock() + 5
                 end
             else
