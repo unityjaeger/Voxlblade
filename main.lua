@@ -125,7 +125,7 @@ function Setup()
     Humanoid.Died:Connect(Setup)
 
     SetupNoclip()
-    if Toggles.anti_aggro then
+    if Toggles.anti_aggro and Toggles.anti_aggro.Value then
         AntiAggro()
     end
     SetupSpeed()
