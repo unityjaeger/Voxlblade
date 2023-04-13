@@ -190,7 +190,7 @@ local function Transport(To)
     end
 
     local Distance = (Root.Position - To.Position).Magnitude
-    if Distance > 20 then
+    if Distance > 10 then
         local Tween = TweenService:Create(Root, TweenInfo.new(Distance / 50, Enum.EasingStyle.Linear), {CFrame = To})
         Tween:Play()
     else
