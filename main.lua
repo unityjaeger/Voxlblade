@@ -257,6 +257,11 @@ MainBox:AddToggle("mob_farm", {
     Default = File.mob_farm or false,
 })
 
+MainBox:AddToggle("mob_farm_nearby", {
+    Text = "Kill Nearby Mobs",
+    Default = false
+})
+
 MainBox:AddDivider()
 
 MainBox:AddSlider('walk_speed', {
@@ -297,6 +302,7 @@ local function GetList()
     end
     return new
 end
+
 local function GetNearestMob()
     local obj, dist = nil, 9e9
     for _,v in ipairs(GetList()) do
@@ -308,6 +314,52 @@ local function GetNearestMob()
     end
     return obj, dist
 end
+
+local function ClosestActualMob()
+    local obj, dist = nil, 9e9
+    for _,v in ipairs(NPCS:GetChildren()) do
+        local mag = (Root.Position - v.Position).Magnitude
+        if mag < dist then
+            dist = mag
+            obj = v
+        end
+    end
+    return obj, dist
+end
+
+Toggles.mob_farm_nearby:OnChanged(function(bool)
+    if not bool then
+        Noclip(false)
+        Float(false)
+    else
+        Noclip(true)
+        Float(true)
+    end
+
+    task.spawn(function()
+        while Toggles.mob_farm_nearby.Value and task.wait() do
+            local Mob, Distance = ClosestActualMob()
+            if Mob then
+                if not Character:FindFirstChild("Sword") then
+                    if EquipDebounce < os.clock() then
+                        EquipWeapon:InvokeServer()
+                    else
+                        EquipDebounce = os.clock() + 1
+                    end
+                end
+                
+                if Mob:FindFirstChild("LinkedModel") then
+                    Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
+                    if Distance < 10 then
+                        SwingSword:FireServer("L")
+                    end
+                else
+                    Transport(Mob.CFrame)
+                end
+            end
+        end
+    end)
+end)
 
 Toggles.anti_aggro:OnChanged(function(bool)
     File.anti_aggro = bool
