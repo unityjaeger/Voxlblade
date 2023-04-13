@@ -265,7 +265,7 @@ MainBox:AddToggle("mob_farm", {
 
 MainBox:AddToggle("mob_farm_nearby", {
     Text = "Kill Nearby Mobs",
-    Default = false
+    Default = File.mob_farm_nearby or false,
 })
 
 MainBox:AddDivider()
@@ -334,6 +334,8 @@ local function ClosestActualMob()
 end
 
 Toggles.mob_farm_nearby:OnChanged(function(bool)
+    File.mob_farm_nearby = bool
+
     if not bool then
         Noclip(false)
         Float(false)
