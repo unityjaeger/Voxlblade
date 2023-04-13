@@ -70,6 +70,9 @@ local SpawnAreas = {
     WinterWoof = {"Tundra", "Tundra2", "Tundra3", "Tundra4", "Tundra5"},
     SteamGolem = {"Tundra", "Tundra2", "Tundra3", "Tundra4", "Tundra5"}
 }
+local CustomOffset = {
+    Scow = CFrame.new(0, 2, 7)
+}
 --//
 
 --//Character Setup
@@ -353,7 +356,13 @@ Toggles.mob_farm_nearby:OnChanged(function(bool)
                 end
                 
                 if Mob:FindFirstChild("LinkedModel") then
-                    Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
+                    local Offset = CFrame.new(0, 0, 3)
+                    local Custom = CustomOffset[Mob.Name:match("%a+")]
+                    if Custom then
+                        Offset = Custom
+                    end
+
+                    Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * Offset)
                     if Distance <= 15 then
                         SwingSword:FireServer("L")
                     end
@@ -461,7 +470,13 @@ Toggles.mob_farm:OnChanged(function(bool)
                 end
                 
                 if Mob:FindFirstChild("LinkedModel") then
-                    Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
+                    local Offset = CFrame.new(0, 0, 3)
+                    local Custom = CustomOffset[Mob.Name:match("%a+")]
+                    if Custom then
+                        Offset = Custom
+                    end
+
+                    Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * Offset)
                     if Distance < 10 then
                         SwingSword:FireServer("L")
                     end
@@ -533,6 +548,8 @@ end)
 
 --//UIMainBox
 Library:OnUnload(function()
+    Toggles = nil
+    Options = nil
     Library.Unloaded = true
 end)
 
