@@ -363,7 +363,7 @@ Toggles.mob_farm_nearby:OnChanged(function(bool)
                     end
 
                     Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * Offset)
-                    if Distance <= 15 then
+                    if Distance <= 20 then
                         SwingSword:FireServer("L")
                     end
                 else
@@ -477,7 +477,7 @@ Toggles.mob_farm:OnChanged(function(bool)
                     end
 
                     Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * Offset)
-                    if Distance < 10 then
+                    if Distance <= 20 then
                         SwingSword:FireServer("L")
                     end
                 else
