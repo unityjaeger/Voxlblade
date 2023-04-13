@@ -364,7 +364,7 @@ Toggles.mob_farm:OnChanged(function(bool)
                 end
 
                 local Corners = {
-                    Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, -Goal.Size.Z * DistanceConstant)
+                    Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, -Goal.Size.Z * DistanceConstant),
                     Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, 0),
                     Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, Goal.Size.Z * DistanceConstant),
                     Goal.Position + Vector3.new(0, 0, Goal.Size.Z * DistanceConstant),
