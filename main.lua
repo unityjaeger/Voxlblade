@@ -437,6 +437,7 @@ MiscBox:AddToggle("unlock_zoom", {
 
 --//Functions for MiscBox
 Toggles.no_fog:OnChanged(function(bool)
+    File.no_fog = bool
     if bool then
         Lighting.FogEnd = 9e9
         Lighting.Atmosphere.Parent = Holder
@@ -448,16 +449,19 @@ Toggles.no_fog:OnChanged(function(bool)
 end)
 
 Toggles.no_shadows:OnChanged(function(bool)
+    File.no_shadows = bool
     Lighting.GlobalShadows = not bool
 end)
 
 Toggles.full_bright:OnChanged(function(bool)
+    File.full_bright = bool
     while Toggles.full_bright.Value and task.wait() do
         Lighting.Brightness = 5
     end
 end)
 
 Toggles.unlock_zoom:OnChanged(function(bool)
+    File.unlock_zoom = bool
     if bool then
         Player.CameraMaxZoomDistance = 9e9
     else
