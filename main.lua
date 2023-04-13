@@ -15,7 +15,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --//Misc
 local Player = game.Players.LocalPlayer
-local CharacterHandler = require(Player.PlayerScripts.Core.Controllers.CharHandler)
+local PlayerScripts = Player:WaitForChild("PlayerScripts")
+local Core = PlayerScripts:WaitForChild("Core")
+local CharacterHandler = require(Core.Controllers:WaitForChild("CharHandler"))
 local Holder = Instance.new("Folder", CoreGui)
 --//
 
@@ -231,6 +233,10 @@ MainBox:AddDropdown('mob_selection', {
     Tooltip = 'u can also select multiple mobs'
 })
 
+--//mob_selection sometimes slow???
+repeat task.wait()
+until Options.mob_selection
+
 if File.mob_selection then
     Options.mob_selection:SetValue(File.mob_selection)
 end
@@ -350,7 +356,7 @@ Toggles.mob_farm_nearby:OnChanged(function(bool)
                 
                 if Mob:FindFirstChild("LinkedModel") then
                     Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
-                    if Distance < 10 then
+                    if Distance <= 15 then
                         SwingSword:FireServer("L")
                     end
                 else
