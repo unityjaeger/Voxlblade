@@ -468,12 +468,12 @@ end)
 
 --//UIMainBox
 Library:OnUnload(function()
-    File.menu_keybind = Options.MenuKeybind.Value
     Library.Unloaded = true
 end)
 
 UIMainBox:AddButton('Unload', function() Library:Unload() end)
-UIMainBox:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', {Default = File.menu_keybind or 'End', NoUI = true, Text = 'Menu keybind'})
+UIMainBox:AddLabel('Menu Bind'):AddKeyPicker('MenuKeybind', {Default = File.menu_keybind or 'End', NoUI = true, Text = 'Menu Keybind'})
+UIMainBox:AddButton("Save Keybind", function() File.menu_keybind = Options.MenuKeybind.Value end)
 
 Library.ToggleKeybind = Options.MenuKeybind
 --//
