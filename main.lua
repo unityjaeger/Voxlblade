@@ -89,11 +89,11 @@ local WalkSpeedConnection
 local function SetupSpeed()
     WalkSpeedConnection = Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
         if CharacterHandler.Running then
-            if Options.run_speed.Value > 16 then
+            if Options.run_speed and Options.run_speed.Value > 16 then
                 Humanoid.WalkSpeed = Options.run_speed.Value
             end
         else
-            if Options.walk_speed.Value > 16 then
+            if Options.walk_speed and Options.walk_speed.Value > 16 then
                 Humanoid.WalkSpeed = Options.walk_speed.Value
             end
         end
@@ -232,10 +232,6 @@ MainBox:AddDropdown('mob_selection', {
     Text = 'Mobs to Farm',
     Tooltip = 'u can also select multiple mobs'
 })
-
---//mob_selection sometimes slow???
-repeat task.wait()
-until Options.mob_selection
 
 if File.mob_selection then
     Options.mob_selection:SetValue(File.mob_selection)
