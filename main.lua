@@ -339,80 +339,82 @@ Toggles.mob_farm:OnChanged(function(bool)
         Float(true)
     end
 
-    while Toggles.mob_farm.Value and task.wait() do
-        if not Root then
-            continue
-        end
-
-        local Mob, Distance = GetNearestMob()
-        if not Mob then
-            if Debounce > os.clock() then
+    task.spawn(function()
+        while Toggles.mob_farm.Value and task.wait() do
+            if not Root then
                 continue
             end
 
-            if Counter > #CombinedAreas then
-                Counter = 1
-                CurrentCounter = 1
-            end
-
-            local Goal = SpawnZones:FindFirstChild(CombinedAreas[CurrentCounter])
-            if Counter > CurrentCounter then
-                if SubCounter > 8 then
-                    CurrentCounter = CurrentCounter + 1
-                    SubCounter = 1
+            local Mob, Distance = GetNearestMob()
+            if not Mob then
+                if Debounce > os.clock() then
                     continue
                 end
 
-                local Corners = {
-                    Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, -Goal.Size.Z * DistanceConstant),
-                    Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, 0),
-                    Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, Goal.Size.Z * DistanceConstant),
-                    Goal.Position + Vector3.new(0, 0, Goal.Size.Z * DistanceConstant),
-                    Goal.Position + Vector3.new(-Goal.Size.X * DistanceConstant, 0, Goal.Size.Z * DistanceConstant),
-                    Goal.Position + Vector3.new(-Goal.Size.X * DistanceConstant, 0, 0),
-                    Goal.Position + Vector3.new(-Goal.Size.X * DistanceConstant, 0, -Goal.Size.Z * DistanceConstant),
-                    Goal.Position + Vector3.new(0, 0, -Goal.Size.Z * DistanceConstant)
-                }
-
-                Transport(CFrame.new(Corners[SubCounter]))
-                if (Root.Position - Corners[SubCounter]).Magnitude < 10 then
-                    SubCounter = SubCounter + 1
-                    Debounce = os.clock() + 5
+                if Counter > #CombinedAreas then
+                    Counter = 1
+                    CurrentCounter = 1
                 end
-            else
-                if XZDistance(Root.Position, Goal.Position) > 10 then
-                    if Root.CFrame.Y < 100 then
-                        Transport(CFrame.new(Root.CFrame.X, 150, Root.CFrame.Z))
+
+                local Goal = SpawnZones:FindFirstChild(CombinedAreas[CurrentCounter])
+                if Counter > CurrentCounter then
+                    if SubCounter > 8 then
+                        CurrentCounter = CurrentCounter + 1
+                        SubCounter = 1
                         continue
                     end
-                    Transport(CFrame.new(Goal.CFrame.X, 150, Goal.CFrame.Z))
+
+                    local Corners = {
+                        Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, -Goal.Size.Z * DistanceConstant),
+                        Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, 0),
+                        Goal.Position + Vector3.new(Goal.Size.X * DistanceConstant, 0, Goal.Size.Z * DistanceConstant),
+                        Goal.Position + Vector3.new(0, 0, Goal.Size.Z * DistanceConstant),
+                        Goal.Position + Vector3.new(-Goal.Size.X * DistanceConstant, 0, Goal.Size.Z * DistanceConstant),
+                        Goal.Position + Vector3.new(-Goal.Size.X * DistanceConstant, 0, 0),
+                        Goal.Position + Vector3.new(-Goal.Size.X * DistanceConstant, 0, -Goal.Size.Z * DistanceConstant),
+                        Goal.Position + Vector3.new(0, 0, -Goal.Size.Z * DistanceConstant)
+                    }
+
+                    Transport(CFrame.new(Corners[SubCounter]))
+                    if (Root.Position - Corners[SubCounter]).Magnitude < 10 then
+                        SubCounter = SubCounter + 1
+                        Debounce = os.clock() + 5
+                    end
                 else
-                    Transport(Goal.CFrame)
-                    if (Root.Position - Goal.Position).Magnitude < 10 then
-                        Counter = Counter + 1
-                        Debounce = os.clock() + 15
+                    if XZDistance(Root.Position, Goal.Position) > 10 then
+                        if Root.CFrame.Y < 100 then
+                            Transport(CFrame.new(Root.CFrame.X, 150, Root.CFrame.Z))
+                            continue
+                        end
+                        Transport(CFrame.new(Goal.CFrame.X, 150, Goal.CFrame.Z))
+                    else
+                        Transport(Goal.CFrame)
+                        if (Root.Position - Goal.Position).Magnitude < 10 then
+                            Counter = Counter + 1
+                            Debounce = os.clock() + 15
+                        end
                     end
                 end
-            end
-        else
-            if not Character:FindFirstChild("Sword") then
-                if EquipDebounce < os.clock() then
-                    EquipWeapon:InvokeServer()
-                else
-                    EquipDebounce = os.clock() + 1
-                end
-            end
-            
-            if Mob:FindFirstChild("LinkedModel") then
-                Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
-                if Distance < 10 then
-                    SwingSword:FireServer("L")
-                end
             else
-                Transport(Mob.CFrame)
+                if not Character:FindFirstChild("Sword") then
+                    if EquipDebounce < os.clock() then
+                        EquipWeapon:InvokeServer()
+                    else
+                        EquipDebounce = os.clock() + 1
+                    end
+                end
+                
+                if Mob:FindFirstChild("LinkedModel") then
+                    Transport(Mob.LinkedModel.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
+                    if Distance < 10 then
+                        SwingSword:FireServer("L")
+                    end
+                else
+                    Transport(Mob.CFrame)
+                end
             end
         end
-    end
+    end)
 end)
 --//
 
@@ -456,9 +458,11 @@ end)
 
 Toggles.full_bright:OnChanged(function(bool)
     File.full_bright = bool
-    while Toggles.full_bright.Value and task.wait() do
-        Lighting.Brightness = 5
-    end
+    task.spawn(function()
+        while Toggles.full_bright.Value and task.wait() do
+            Lighting.Brightness = 5
+        end
+    end)
 end)
 
 Toggles.unlock_zoom:OnChanged(function(bool)
